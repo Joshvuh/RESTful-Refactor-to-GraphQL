@@ -15,35 +15,38 @@ import { removeBookId } from '../utils/localStorage';
 
 const SavedBooks = () => {
   const { loading, data } = useQuery(GET_ME);
-  const [removeBook] = useMutation(REMOVE_BOOK);
+  const [removeBook, { error }] = useMutation(REMOVE_BOOK);
 
-  // use this to determine if `useEffect()` hook needs to run again
+  if (loading) {
+    return <h2>LOADING...</h2>;
+  }
+  
   const userData = data?.me || {};
+  console.log(data.me)
 
+  // function to delete book from database
   const handleRemoveBook = async (bookId) => {
-    // get token
     const token = Auth.loggedIn() ? Auth.getToken() : null;
 
     if (!token) {
       return false;
     }
 
+    // new code
     try {
-      await removeBook({
-        variables: { bookId },
-      });
-
-      // upon success, remove book's id from localStorage
+    const response = await removeBook({ variables: { bookId } });
+        console.log('Deleted record: ', response);
+        if (error) {
+          console.log(error);
+        }
+      // also remove from Localstorage
       removeBookId(bookId);
     } catch (err) {
-      console.error(err);
+      // display any caught errors here
+        console.error(err);
     }
   };
 
-  // if data isn't here yet, say so
-  if (loading) {
-    return <h2>LOADING...</h2>;
-  }
 
   return (
     <>
@@ -54,12 +57,12 @@ const SavedBooks = () => {
       </div>
       <Container>
         <h2 className='pt-5'>
-          {userData.savedBooks.length
-            ? `Viewing ${userData.savedBooks.length} saved ${userData.savedBooks.length === 1 ? 'book' : 'books'}:`
+          {userData.savedBooks?.length
+            ? `Viewing ${userData.savedBooks?.length} saved ${userData.savedBooks?.length === 1 ? 'book' : 'books'}:`
             : 'You have no saved books!'}
         </h2>
         <Row>
-          {userData.savedBooks.map((book) => {
+          {userData.savedBooks?.map((book) => {
             return (
               <Col md="4">
                 <Card key={book.bookId} border='dark'>
